@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Charlotte’s Web – Full Interactive Reading Game</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111827; --card2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --accent:#22c55e; --accent2:#60a5fa; --warn:#f59e0b; --bad:#ef4444; --good:#10b981; --pink:#f472b6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--text);
+      background:
+      radial-gradient(1000px 600px at 0% -10%, #1d4ed8 0%, transparent 60%),
+      radial-gradient(900px 520px at 110% 0%, #16a34a 0%, transparent 60%),
+      radial-gradient(700px 480px at 50% 120%, #db2777 0%, transparent 60%),
+      var(--bg);
+      min-height:100vh; padding:16px; display:flex; justify-content:center;}
+    .app{width:min(1100px,100%);}
+    header{display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-radius:16px; margin-bottom:12px;
+      background:linear-gradient(135deg, rgba(96,165,250,.18), rgba(34,197,94,.18), rgba(244,114,182,.12));
+      border:1px solid rgba(255,255,255,.09); backdrop-filter:blur(6px);}
+    header h1{margin:0; font-size:20px;}
+    header .sub{color:var(--muted); font-size:13px;}
+    .row{display:flex; gap:12px; flex-wrap:wrap;}
+    .card{background:rgba(17,24,39,.95); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px;
+      box-shadow:0 10px 28px rgba(0,0,0,.35);}
+    .left{flex:1.25; min-width:300px;}
+    .right{flex:.85; min-width:260px;}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+    .tab{padding:8px 10px;border-radius:999px;cursor:pointer;font-size:13px;border:1px solid rgba(255,255,255,.10);
+      background:#0b1220;color:var(--text);transition:.12s ease;user-select:none;}
+    .tab.active{background:linear-gradient(135deg, rgba(34,197,94,.25), rgba(96,165,250,.25));
+      border-color:rgba(255,255,255,.18); transform:translateY(-1px);}
+    .progress{display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted);}
+    .pill{padding:4px 8px; background:#0b1220; border:1px solid rgba(255,255,255,.08);
+      border-radius:999px; font-size:12px;}
+    .q-title{font-weight:800;font-size:16px;margin:6px 0;}
+    .q-text{font-size:15px;line-height:1.55;margin-bottom:10px;}
+    .options{display:grid;gap:8px;}
+    .opt{background:#0b1220;border:1px solid rgba(255,255,255,.09);padding:10px;border-radius:12px;cursor:pointer;
+      font-size:15px;line-height:1.3;transition:.12s ease;}
+    .opt:hover{transform:translateY(-1px); border-color:rgba(255,255,255,.18);}
+    .opt.correct{border-color:rgba(16,185,129,.8); background:rgba(16,185,129,.12);}
+    .opt.wrong{border-color:rgba(239,68,68,.8); background:rgba(239,68,68,.12);}
+    .feedback{margin-top:10px;padding:10px;background:#0b1220;border:1px dashed rgba(255,255,255,.14);
+      border-radius:12px;font-size:14px;line-height:1.5;display:none;}
+    .btns{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+    button{background:linear-gradient(135deg,#22c55e,#60a5fa);border:none;color:white;padding:9px 12px;border-radius:12px;
+      cursor:pointer;font-weight:800;font-size:14px;transition:.12s ease;}
+    button.secondary{background:#0b1220;border:1px solid rgba(255,255,255,.12);color:var(--text);font-weight:600;}
+    button:disabled{opacity:.55;cursor:not-allowed;}
+    .section-title{font-weight:900;margin-bottom:8px;}
+    .list{display:grid;gap:8px;font-size:14px;line-height:1.5;}
+    .hint{color:var(--muted);font-size:13px;}
+    textarea{width:100%;min-height:92px;resize:vertical;background:#0b1220;color:var(--text);
+      border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;font-size:14px;}
+    .open-q{display:grid;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed rgba(255,255,255,.12);}
+    .badge{display:inline-block;font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,.15);
+      border:1px solid rgba(96,165,250,.5);margin-right:6px;}
+    .score-big{font-size:34px;font-weight:900;}
+    .muted{color:var(--muted);}
+    .footer{margin-top:12px;color:var(--muted);font-size:12px;text-align:center;}
+    .success{color:var(--good);font-weight:900;}
+    .danger{color:var(--bad);font-weight:900;}
+    .block{background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px; margin-top:8px;}
+    .lock{opacity:.35; filter:grayscale(1);}
+    .star{color:#facc15; font-weight:900;}
+    .toggle{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+    .tiny{font-size:12px;}
+    .hr{border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;}
+    .rec{border-left:3px solid var(--accent2); padding-left:8px; font-size:14px; line-height:1.55;}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Charlotte’s Web — Full Interactive Reading Game</h1>
+      <div class="sub">Difficulty: Intermediate (C). Chapters 1–22 (Full Book). Save progress on this device.</div>
+    </div>
+    <div class="progress">
+      <div class="pill">Player: <span id="playerName">Sister</span></div>
+      <div class="pill">Section: <b id="secLabel">1</b>/<span id="secTotal"></span></div>
+      <div class="pill">Score: <b id="score">0</b></div>
+      <div class="pill">Streak: <b id="streak">0</b></div>
+      <div class="pill">Stars: <b id="stars">0</b> <span class="star">★</span></div>
+    </div>
+  </header>
+
+  <div class="row">
+    <section class="card left">
+      <div class="tabs" id="tabs"></div>
+
+      <div id="quizArea">
+        <div class="q-title" id="qTitle"></div>
+        <div class="q-text" id="qText"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+
+        <div class="btns">
+          <button id="checkBtn" disabled>Check</button>
+          <button class="secondary" id="nextBtn" disabled>Next</button>
+          <button class="secondary" id="hintBtn">Hint</button>
+          <button class="secondary" id="listenBtn">Listen</button>
+          <button class="secondary" id="skipBtn">Skip</button>
+        </div>
+
+        <div class="block tiny muted" id="lockMsg" style="display:none;"></div>
+      </div>
+    </section>
+
+    <aside class="card right">
+      <div class="section-title">How to Play</div>
+      <div class="list">
+        <div>1. Sections unlock in order. Finish the quiz of a section to unlock the next.</div>
+        <div>2. Tap <b>Listen</b> to hear the question (device TTS).</div>
+        <div>3. Do “Think & Speak” and “Mini Writing” after each section.</div>
+        <div>4. Parent Mode shows progress and “weak areas”.</div>
+      </div>
+
+      <hr class="hr">
+
+      <div class="section-title">Think & Speak (Open Questions)</div>
+      <div id="openArea"></div>
+      <div class="toggle">
+        <button class="secondary" id="saveOpenBtn">Save Answers</button>
+        <button class="secondary" id="speechBtn">Speak Answer</button>
+      </div>
+      <div class="tiny muted" id="speechStatus" style="margin-top:6px;"></div>
+
+      <hr class="hr">
+
+      <div class="section-title">Vocabulary Cards</div>
+      <div id="vocabArea" class="list"></div>
+
+      <hr class="hr">
+
+      <div class="section-title">Mini Listening</div>
+      <div class="block">
+        <div class="tiny muted">Press Play, listen to a sentence, choose the meaning.</div>
+        <button class="secondary" id="listenPlayBtn">Play Listening Item</button>
+        <div id="listenItemText" class="tiny muted" style="margin-top:6px;"></div>
+        <div id="listenOptions" class="list" style="margin-top:6px;"></div>
+      </div>
+
+      <hr class="hr">
+
+      <div class="section-title">Parent Mode</div>
+      <div class="block list">
+        <div>Total correct: <b id="pCorrect">0</b></div>
+        <div>Total answered: <b id="pAnswered">0</b></div>
+        <div>Accuracy: <b id="pAcc">0%</b></div>
+        <div>Weak sections: <b id="pWeak">—</b></div>
+        <button class="secondary" id="resetProgressBtn">Reset Progress</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="section-title">Session Summary</div>
+    <div class="row" style="align-items:center;">
+      <div style="flex:1; min-width:180px;">
+        <div class="score-big" id="finalScore">0</div>
+        <div class="muted">Correct: <span id="correctCount">0</span> / <span id="totalCount">0</span></div>
+        <div class="muted">Best Streak: <span id="bestStreak">0</span></div>
+        <div class="muted">Unlocked Sections: <span id="unlockedCount">1</span></div>
+      </div>
+      <div style="flex:2; min-width:220px;">
+        <div id="encourage" class="rec"></div>
+        <div class="tiny muted" style="margin-top:6px;">
+          Suggested routine: 10–15 minutes, 2–3 times/week.
+        </div>
+      </div>
+      <div style="flex:1; min-width:190px; text-align:right;">
+        <button id="restartSectionBtn">Restart Current Section</button>
+        <button class="secondary" id="restartAllBtn">Restart All</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Charlotte’s Web reading confidence grows with repetition and reflection.</div>
+</div>
+
+<script>
+const sections = [
+  {
+    id:"s1", title:"Ch.1–2: Fern Saves Wilbur",
+    recap:[
+      "Fern stops her father from killing a runt pig because she believes it is unfair.",
+      "She names him Wilbur and bottle-feeds him, treating him like family."
+    ],
+    vocab:[
+      {w:"runt", m:"smallest, weakest baby animal"},
+      {w:"injustice", m:"something unfair"},
+      {w:"litter", m:"group of baby animals born together"},
+      {w:"tremble", m:"shake a little from fear/cold"}
+    ],
+    listening:[
+      {text:"Fern says it is unfair to kill Wilbur.", options:["She thinks it is wrong.","She wants a bigger pig.","She dislikes animals."], answer:0}
+    ],
+    quiz:[
+      {title:"Why does Fern stop her father?", text:"Fern stops her father from killing Wilbur mainly because…",
+        options:["She wants to sell him.","She thinks it is unfair to kill a runt.","She is afraid of pigs.","She wants attention."],
+        answer:1, explain:"Fern argues about fairness and kindness toward the runt pig."},
+      {title:"How does Fern care for Wilbur?", text:"At home, Fern shows love by…",
+        options:["Ignoring him.","Feeding him with a bottle and carrying him.","Training him to hunt.","Keeping him outdoors only."],
+        answer:1, explain:"She bottle-feeds and treats Wilbur like a baby."}
+    ],
+    open:[
+      {prompt:"What does “unfair” mean? Give one example from your life.", hint:"Try: “Unfair means… For example, when…”"},
+      {prompt:"Describe Fern using two adjectives. Why those words?", hint:"Examples: kind, brave, caring, determined."}
+    ],
+    writing:"Write 3–5 sentences: If you were Fern, how would you take care of Wilbur?"
+  },
+  {
+    id:"s2", title:"Ch.3–4: Wilbur Moves to the Barn",
+    recap:[
+      "Wilbur grows quickly and is sold to Uncle Homer’s farm.",
+      "He feels lonely in the barn and wants a real friend."
+    ],
+    vocab:[
+      {w:"lonely", m:"sad because you are alone"},
+      {w:"slops", m:"wet food for pigs"},
+      {w:"manure", m:"animal waste used as fertilizer"},
+      {w:"curious", m:"wanting to know more"}
+    ],
+    listening:[
+      {text:"Wilbur feels lonely after moving to the barn.", options:["He is sad to be alone.","He is excited to be famous.","He wants to sleep."], answer:0}
+    ],
+    quiz:[
+      {title:"How does Wilbur feel in the barn?", text:"When Wilbur first arrives at Zuckerman’s barn, he mostly feels…",
+        options:["Excited and independent.","Lonely and bored.","Angry and mean.","Proud and loud."],
+        answer:1, explain:"He misses Fern and wants company."},
+      {title:"Who notices Wilbur’s loneliness?", text:"Which character first talks to Wilbur kindly in the barn?",
+        options:["Templeton","Charlotte","The geese","Lurvy"],
+        answer:2, explain:"The geese and other animals chat with him early on."}
+    ],
+    open:[
+      {prompt:"Why is friendship important to Wilbur?", hint:"Try: “Friendship is important because…”"},
+      {prompt:"Have you ever moved or changed class? How did you feel?", hint:"Make a connection to Wilbur."}
+    ],
+    writing:"Write about a time you felt lonely and what helped you."
+  },
+  {
+    id:"s3", title:"Ch.5–7: Charlotte Appears",
+    recap:[
+      "Wilbur hears a mysterious voice and meets Charlotte the spider.",
+      "Charlotte is calm, smart, and promises to be Wilbur’s friend."
+    ],
+    vocab:[
+      {w:"salutations", m:"a fancy way to say hello"},
+      {w:"radiant", m:"shining brightly; very happy"},
+      {w:"insect", m:"small animal like a fly or beetle"},
+      {w:"terrific", m:"very good, excellent"}
+    ],
+    listening:[
+      {text:"Charlotte introduces herself politely to Wilbur.", options:["She greets him kindly.","She scares him.","She ignores him."], answer:0}
+    ],
+    quiz:[
+      {title:"Who is the mysterious voice?", text:"Wilbur hears a voice at night. Who is it?",
+        options:["The goose","Charlotte","The farmer","A cat"],
+        answer:1, explain:"Charlotte lives above Wilbur’s pen."},
+      {title:"First impression of Charlotte", text:"Wilbur is surprised by Charlotte because she…",
+        options:["Is loud and silly.","Eats insects and is a spider.","Is a pig too.","Cannot talk."],
+        answer:1, explain:"He learns spiders eat bugs, but she is still kind."}
+    ],
+    open:[
+      {prompt:"What kind of friend is Charlotte so far?", hint:"Use a word like: wise, patient, loyal."},
+      {prompt:"Wilbur is afraid of spiders at first. Why do people fear things they don’t understand?", hint:"Explain simply."}
+    ],
+    writing:"Write a short dialogue (4–6 lines) between Wilbur and Charlotte."
+  },
+  {
+    id:"s4", title:"Ch.8–10: “Some Pig” Web",
+    recap:[
+      "Charlotte learns Wilbur may be killed in winter.",
+      "She plans to save him by writing words in her web.",
+      "The first message is “Some Pig,” shocking the humans."
+    ],
+    vocab:[
+      {w:"scheme", m:"a clever plan"},
+      {w:"miracle", m:"something amazing that seems impossible"},
+      {w:"ordinary", m:"normal, not special"},
+      {w:"astonished", m:"very surprised"}
+    ],
+    listening:[
+      {text:"Charlotte writes “Some Pig” in her web.", options:["She makes humans think Wilbur is special.","She scares the geese.","She traps a giant fly."], answer:0}
+    ],
+    quiz:[
+      {title:"Charlotte’s plan", text:"How does Charlotte try to save Wilbur?",
+        options:["Help him escape.","Write words in her web so people admire him.","Hide him forever.","Ask Fern to buy him back."],
+        answer:1, explain:"The web messages change the humans’ minds."},
+      {title:"Effect of “Some Pig”", text:"After seeing “Some Pig,” the Zuckermans…",
+        options:["Ignore it.","Think Wilbur is extraordinary and protect him.","Sell Wilbur quickly.","Destroy the web."],
+        answer:1, explain:"They believe it is a miracle and stop thinking of killing him."}
+    ],
+    open:[
+      {prompt:"Why are words powerful in this story?", hint:"How do they change people’s actions?"},
+      {prompt:"If you could write one positive word about a friend, what would it be and why?", hint:"Example: “brave,” “kind.”"}
+    ],
+    writing:"Write 3 sentences: How would you feel if you were Wilbur seeing the web?"
+  },
+  {
+    id:"s5", title:"Ch.11–13: Templeton Helps",
+    recap:[
+      "Charlotte needs new words and asks Templeton the rat.",
+      "Templeton agrees mainly for food and comfort.",
+      "New words like “Terrific” appear."
+    ],
+    vocab:[
+      {w:"selfish", m:"only caring about yourself"},
+      {w:"greedy", m:"wanting too much"},
+      {w:"terrific", m:"very good"},
+      {w:"compliment", m:"a nice thing you say about someone"}
+    ],
+    listening:[
+      {text:"Templeton helps Charlotte to get food.", options:["He wants rewards.","He loves cleaning.","He is scared of pigs."], answer:0}
+    ],
+    quiz:[
+      {title:"Why Templeton agrees", text:"Templeton helps Charlotte because…",
+        options:["He loves Wilbur.","He is promised food.","He is brave.","He wants to be famous."],
+        answer:1, explain:"Templeton is selfish and wants food."},
+      {title:"Meaning of “Terrific”", text:"When the web says “Terrific,” it means Wilbur is…",
+        options:["Scary.","Very good and special.","Very old.","Very small."],
+        answer:1, explain:"Terrific is a strong compliment."}
+    ],
+    open:[
+      {prompt:"Is Templeton a good friend? Why or why not?", hint:"Use evidence from the story."},
+      {prompt:"Can someone be selfish and still helpful? Give an example.", hint:"There is no single correct answer."}
+    ],
+    writing:"Write a short opinion: Would you trust Templeton? Why?"
+  },
+  {
+    id:"s6", title:"Ch.14–16: Wilbur Becomes Famous",
+    recap:[
+      "More people visit the barn to see Wilbur.",
+      "Charlotte keeps working hard, while Wilbur learns to act confidently."
+    ],
+    vocab:[
+      {w:"famous", m:"known by many people"},
+      {w:"attention", m:"people watching you"},
+      {w:"confidence", m:"believing in yourself"},
+      {w:"humble", m:"not proud, staying modest"}
+    ],
+    listening:[
+      {text:"Wilbur practices to look terrific for visitors.", options:["He learns to act well.","He hides.","He forgets Charlotte."], answer:0}
+    ],
+    quiz:[
+      {title:"Why people come", text:"Why do crowds start coming to the barn?",
+        options:["They want to buy geese.","They hear about the web words.","They look for Templeton.","They dislike spiders."],
+        answer:1, explain:"The web messages spread and create excitement."},
+      {title:"Wilbur’s new attitude", text:"Wilbur starts to feel more confident because…",
+        options:["He is alone.","Charlotte believes in him and helps him practice.","He wants revenge.","He becomes mean."],
+        answer:1, explain:"Charlotte’s support builds his confidence."}
+    ],
+    open:[
+      {prompt:"How does Wilbur change as he becomes famous?", hint:"Think about feelings and behavior."},
+      {prompt:"What is the difference between being confident and being proud?", hint:"Use your own words."}
+    ],
+    writing:"Write 4–5 sentences: What makes a person truly special?"
+  },
+  {
+    id:"s7", title:"Ch.17–18: The Fair Trip",
+    recap:[
+      "Wilbur and Charlotte travel to the county fair.",
+      "Charlotte is tired but continues her mission."
+    ],
+    vocab:[
+      {w:"fair", m:"a big event with animals, food, prizes"},
+      {w:"crate", m:"a box for carrying animals"},
+      {w:"exhausted", m:"very tired"},
+      {w:"devotion", m:"deep love and loyalty"}
+    ],
+    listening:[
+      {text:"Charlotte travels with Wilbur to the fair.", options:["She shows devotion.","She wants to leave him.","She hates fairs."], answer:0}
+    ],
+    quiz:[
+      {title:"Why go to the fair?", text:"Why does Zuckerman take Wilbur to the fair?",
+        options:["For fun only.","To compete for a prize because Wilbur is special.","To sell him.","To find Fern."],
+        answer:1, explain:"Wilbur is entered in a contest due to his fame."},
+      {title:"Charlotte at the fair", text:"At the fair, Charlotte mainly feels…",
+        options:["Energetic and young.","Tired but determined.","Angry at Wilbur.","Jealous of other spiders."],
+        answer:1, explain:"She is weak but continues helping."}
+    ],
+    open:[
+      {prompt:"Why does Charlotte keep working even when tired?", hint:"Think about love and sacrifice."},
+      {prompt:"What would you do for a good friend?", hint:"Real-life example."}
+    ],
+    writing:"Write a postcard from Wilbur to the barn describing the fair."
+  },
+  {
+    id:"s8", title:"Ch.19–20: A Rival Pig",
+    recap:[
+      "Wilbur meets another pig in the contest.",
+      "Charlotte writes “Humble” or “Radiant” to help Wilbur stand out."
+    ],
+    vocab:[
+      {w:"rival", m:"someone you compete against"},
+      {w:"humble", m:"modest, not bragging"},
+      {w:"radiant", m:"shining with happiness"},
+      {w:"triumphant", m:"feeling like a winner"}
+    ],
+    listening:[
+      {text:"Charlotte writes another word to help Wilbur win.", options:["She supports him again.","She gives up.","She laughs at him."], answer:0}
+    ],
+    quiz:[
+      {title:"Why another word?", text:"Why does Charlotte add a new word at the fair?",
+        options:["To decorate the web.","To make Wilbur unique in the contest.","To scare people.","To help Templeton."],
+        answer:1, explain:"The extra word makes judges notice Wilbur."},
+      {title:"Meaning of “Humble”", text:"Calling Wilbur “Humble” suggests he is…",
+        options:["Too proud.","Modest and gentle.","Very noisy.","Very lazy."],
+        answer:1, explain:"Humble means not bragging."}
+    ],
+    open:[
+      {prompt:"Is Wilbur really humble? Give proof from the story.", hint:"Use one example."},
+      {prompt:"Why do contests matter to humans but not to Charlotte?", hint:"Compare values."}
+    ],
+    writing:"Write a mini essay: What matters more—winning or friendship? Why?"
+  },
+  {
+    id:"s9", title:"Ch.21–22: Goodbye & New Life",
+    recap:[
+      "Charlotte is too weak to go home and dies at the fair.",
+      "Wilbur carries her egg sac back to the barn.",
+      "Her babies hatch; most leave, but a few stay with Wilbur."
+    ],
+    vocab:[
+      {w:"frail", m:"weak and delicate"},
+      {w:"inherit", m:"receive after someone dies"},
+      {w:"grateful", m:"thankful"},
+      {w:"sacrifice", m:"giving something up for others"}
+    ],
+    listening:[
+      {text:"Wilbur brings Charlotte’s egg sac home.", options:["He is grateful and loyal.","He forgets her.","He wants a prize."], answer:0}
+    ],
+    quiz:[
+      {title:"Why Charlotte stays", text:"Why can’t Charlotte return to the barn?",
+        options:["She wants to stay famous.","She is frail and has laid her eggs.","She is lost.","She is angry."],
+        answer:1, explain:"Charlotte is weak and her life is ending after laying eggs."},
+      {title:"What Wilbur saves", text:"What does Wilbur bring back carefully?",
+        options:["A ribbon","A new friend","Charlotte’s egg sac","A bag of slops"],
+        answer:2, explain:"He protects the egg sac to continue Charlotte’s life."},
+      {title:"Big theme", text:"One main message of the novel is…",
+        options:["Fame is everything.","Friendship and kindness can change lives.","Spiders should be feared.","Rats are heroes."],
+        answer:1, explain:"The story focuses on friendship, sacrifice, and love."}
+    ],
+    open:[
+      {prompt:"How does Wilbur show gratitude to Charlotte?", hint:"List two actions."},
+      {prompt:"Why is the ending both sad and hopeful?", hint:"Think about death and new life."}
+    ],
+    writing:"Write 5–7 sentences retelling the ending in your own words."
+  }
+];
+
+const secTotal = sections.length;
+document.getElementById("secTotal").textContent = secTotal;
+
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]); }
+
+function speak(text){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95; u.pitch = 1.05; u.lang = "en-US";
+  window.speechSynthesis.speak(u);
+}
+
+const PROG_KEY="cw_full_progress_v1";
+let prog = JSON.parse(localStorage.getItem(PROG_KEY)||"{}");
+if(!prog.unlocked) prog.unlocked = 1;
+if(!prog.sectionScores) prog.sectionScores = Array(secTotal).fill(0).map(()=>({correct:0, answered:0}));
+if(!prog.totalCorrect) prog.totalCorrect=0;
+if(!prog.totalAnswered) prog.totalAnswered=0;
+localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+
+let questionsFlat=[];
+sections.forEach((sec, si)=>{
+  sec.quiz.forEach((q, qi)=>{
+    questionsFlat.push({secIndex:si, qIndex:qi, ...q});
+  });
+});
+const totalQuestions = questionsFlat.length;
+
+let currentSectionIndex = 0;
+let currentQuestionIndex = questionsFlat.findIndex(x=>x.secIndex===0);
+let score = prog.score || 0;
+let streak = prog.streak || 0;
+let bestStreak = prog.bestStreak || 0;
+let stars = prog.stars || 0;
+
+let selectedOptionIndex = null;
+let locked=false;
+
+const tabsEl=document.getElementById("tabs");
+const qTitleEl=document.getElementById("qTitle");
+const qTextEl=document.getElementById("qText");
+const optionsEl=document.getElementById("options");
+const feedbackEl=document.getElementById("feedback");
+const checkBtn=document.getElementById("checkBtn");
+const nextBtn=document.getElementById("nextBtn");
+const hintBtn=document.getElementById("hintBtn");
+const listenBtn=document.getElementById("listenBtn");
+const skipBtn=document.getElementById("skipBtn");
+const lockMsg=document.getElementById("lockMsg");
+
+const scoreEl=document.getElementById("score");
+const streakEl=document.getElementById("streak");
+const starsEl=document.getElementById("stars");
+const secLabel=document.getElementById("secLabel");
+
+const openAreaEl=document.getElementById("openArea");
+const saveOpenBtn=document.getElementById("saveOpenBtn");
+const vocabAreaEl=document.getElementById("vocabArea");
+
+const listenPlayBtn=document.getElementById("listenPlayBtn");
+const listenItemText=document.getElementById("listenItemText");
+const listenOptions=document.getElementById("listenOptions");
+
+const finalScoreEl=document.getElementById("finalScore");
+const correctCountEl=document.getElementById("correctCount");
+const totalCountEl=document.getElementById("totalCount");
+const bestStreakEl=document.getElementById("bestStreak");
+const unlockedCountEl=document.getElementById("unlockedCount");
+const encourageEl=document.getElementById("encourage");
+
+const restartSectionBtn=document.getElementById("restartSectionBtn");
+const restartAllBtn=document.getElementById("restartAllBtn");
+const resetProgressBtn=document.getElementById("resetProgressBtn");
+
+function firstQuestionIndexForSection(si){
+  return questionsFlat.findIndex(x=>x.secIndex===si);
+}
+
+function renderTabs(){
+  tabsEl.innerHTML="";
+  sections.forEach((sec,i)=>{
+    const tab=document.createElement("div");
+    const unlocked = i < prog.unlocked;
+    tab.className="tab"+(i===currentSectionIndex?" active":"")+(unlocked?"":" lock");
+    tab.textContent = unlocked ? sec.title : `Locked: ${sec.title}`;
+    tab.onclick=()=>{
+      if(!unlocked){
+        lockMsg.style.display="block";
+        lockMsg.textContent="Finish the previous section quiz to unlock this section.";
+        return;
+      }
+      currentSectionIndex=i;
+      currentQuestionIndex = firstQuestionIndexForSection(i);
+      renderTabs(); renderQuestion(); renderSidePanels();
+    };
+    tabsEl.appendChild(tab);
+  });
+}
+
+function renderSidePanels(){
+  const sec=sections[currentSectionIndex];
+
+  openAreaEl.innerHTML="";
+  sec.open.forEach((o, i)=>{
+    const wrap=document.createElement("div");
+    wrap.className="open-q";
+    wrap.innerHTML=`
+      <div><span class="badge">Prompt ${i+1}</span>${o.prompt}</div>
+      <div class="hint">${o.hint}</div>
+      <textarea data-open="${sec.id}-open-${i}" placeholder="Write or speak your answer in English..."></textarea>
+    `;
+    openAreaEl.appendChild(wrap);
+  });
+  const w = document.createElement("div");
+  w.className="open-q";
+  w.innerHTML=`
+    <div><span class="badge">Mini Writing</span>${sec.writing}</div>
+    <textarea data-open="${sec.id}-writing" placeholder="Write a short paragraph..."></textarea>
+  `;
+  openAreaEl.appendChild(w);
+
+  openAreaEl.querySelectorAll("textarea").forEach(a=>{
+    const key=a.getAttribute("data-open");
+    const saved=localStorage.getItem(key);
+    if(saved) a.value=saved;
+  });
+
+  vocabAreaEl.innerHTML="";
+  sec.vocab.forEach(v=>{
+    const item=document.createElement("div");
+    item.className="block";
+    item.innerHTML=`
+      <div><b>${v.w}</b> — <span class="muted">${v.m}</span></div>
+      <div class="tiny muted" style="margin-top:4px;">Tap to see an example.</div>
+      <div class="tiny" style="display:none;margin-top:6px;" data-ex>
+        Example: "${buildExample(v.w)}"
+      </div>
+    `;
+    item.onclick=()=>{
+      const ex=item.querySelector("[data-ex]");
+      ex.style.display = ex.style.display==="none" ? "block":"none";
+    };
+    vocabAreaEl.appendChild(item);
+  });
+
+  setupListeningItem();
+  updateParentMode();
+}
+
+function buildExample(word){
+  const exMap={
+    runt:"Wilbur was the runt, but Fern loved him.",
+    injustice:"Fern could not accept the injustice.",
+    litter:"The pig was the smallest in the litter.",
+    tremble:"Wilbur began to tremble when he was lonely.",
+    lonely:"Wilbur felt lonely in the barn.",
+    slops:"He ate warm slops from a wooden trough.",
+    manure:"The barn smelled of manure and hay.",
+    curious:"Wilbur was curious about the other animals.",
+    salutations:"Charlotte said, 'Salutations!'",
+    radiant:"Fern looked radiant when she visited.",
+    insect:"Charlotte caught an insect in her web.",
+    terrific:"Everyone said Wilbur was terrific.",
+    scheme:"Charlotte made a clever scheme.",
+    miracle:"The web words felt like a miracle.",
+    ordinary:"Wilbur was not an ordinary pig.",
+    astonished:"The Zuckermans were astonished.",
+    selfish:"Templeton was selfish but useful.",
+    greedy:"The greedy rat wanted more food.",
+    compliment:"Terrific is a compliment.",
+    famous:"Wilbur became famous on the farm.",
+    attention:"Wilbur enjoyed the attention.",
+    confidence:"Charlotte gave Wilbur confidence.",
+    fair:"They traveled to the county fair.",
+    crate:"Wilbur rode in a crate.",
+    exhausted:"Charlotte was exhausted at the fair.",
+    devotion:"Charlotte’s devotion saved Wilbur.",
+    rival:"Wilbur faced a rival pig.",
+    humble:"Wilbur stayed humble about fame.",
+    triumphant:"Wilbur felt triumphant after winning.",
+    frail:"Charlotte was frail near the end.",
+    inherit:"Wilbur would inherit her egg sac.",
+    grateful:"Wilbur was grateful to Charlotte.",
+    sacrifice:"Charlotte’s sacrifice was true friendship."
+  };
+  return exMap[word] || `I can use "${word}" in a sentence.`;
+}
+
+function renderQuestion(){
+  lockMsg.style.display="none";
+  const q=questionsFlat[currentQuestionIndex];
+  if(!q){ return; }
+
+  if(q.secIndex >= prog.unlocked){
+    currentSectionIndex = prog.unlocked-1;
+    currentQuestionIndex = firstQuestionIndexForSection(currentSectionIndex);
+    renderTabs(); renderQuestion(); renderSidePanels();
+    return;
+  }
+  currentSectionIndex=q.secIndex;
+  renderTabs();
+  secLabel.textContent = currentSectionIndex+1;
+
+  locked=false; selectedOptionIndex=null; checkBtn.disabled=true; nextBtn.disabled=true;
+  feedbackEl.style.display="none"; feedbackEl.textContent="";
+
+  qTitleEl.textContent=`Q${currentQuestionIndex+1}/${totalQuestions} — ${q.title}`;
+  qTextEl.textContent=q.text;
+
+  optionsEl.innerHTML="";
+  q.options.forEach((opt, idx)=>{
+    const div=document.createElement("div");
+    div.className="opt"; div.textContent=opt;
+    div.onclick=()=>{
+      if(locked) return;
+      [...optionsEl.children].forEach(c=>c.style.outline="none");
+      div.style.outline="2px solid rgba(96,165,250,.9)";
+      selectedOptionIndex=idx; checkBtn.disabled=false;
+    };
+    optionsEl.appendChild(div);
+  });
+
+  renderSidePanels();
+  updateScoreUI(false);
+}
+
+function maybeUnlockNextSection(){
+  const secQuestions = questionsFlat.filter(q=>q.secIndex===currentSectionIndex);
+  const secAnswered = prog.sectionScores[currentSectionIndex].answered;
+  if(secAnswered>=secQuestions.length && prog.unlocked===currentSectionIndex+1 && currentSectionIndex<secTotal-1){
+    prog.unlocked++;
+    stars+=3;
+    prog.stars=stars; prog.score=score;
+    localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+  }
+}
+
+checkBtn.onclick=()=>{
+  if(selectedOptionIndex===null||locked) return;
+  locked=true;
+  const q=questionsFlat[currentQuestionIndex];
+  const opts=[...optionsEl.children];
+  const isCorrect=selectedOptionIndex===q.answer;
+
+  opts.forEach((o,idx)=>{
+    if(idx===q.answer) o.classList.add("correct");
+    if(idx===selectedOptionIndex && !isCorrect) o.classList.add("wrong");
+    o.style.outline="none";
+  });
+
+  feedbackEl.style.display="block";
+  prog.totalAnswered++; 
+  prog.sectionScores[currentSectionIndex].answered++;
+
+  if(isCorrect){
+    prog.totalCorrect++; 
+    prog.sectionScores[currentSectionIndex].correct++;
+    streak++; bestStreak=Math.max(bestStreak, streak);
+    const bonus = Math.min(5, streak);
+    score += 10 + bonus;
+    if(bonus>=4 && (currentQuestionIndex%2===0)) stars++;
+    feedbackEl.innerHTML=`<span class="success">Correct.</span> ${q.explain}`;
+  }else{
+    streak=0;
+    feedbackEl.innerHTML=`<span class="danger">Not quite.</span> ${q.explain}`;
+  }
+
+  prog.score=score; prog.streak=streak; prog.bestStreak=bestStreak; prog.stars=stars;
+  localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+
+  maybeUnlockNextSection();
+  updateScoreUI(true);
+  renderTabs();
+  nextBtn.disabled=false; checkBtn.disabled=true;
+};
+
+nextBtn.onclick=()=>{
+  currentQuestionIndex++;
+  if(currentQuestionIndex>=totalQuestions){
+    currentQuestionIndex=totalQuestions-1;
+  }
+  renderQuestion();
+};
+
+skipBtn.onclick=()=>{
+  streak=0; prog.streak=0;
+  localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+  currentQuestionIndex++;
+  renderQuestion();
+};
+
+hintBtn.onclick=()=>{
+  const q=questionsFlat[currentQuestionIndex];
+  feedbackEl.style.display="block";
+  feedbackEl.innerHTML=`<b>Hint:</b> Recap: ${sections[q.secIndex].recap[0]}`;
+};
+
+listenBtn.onclick=()=>{
+  const q=questionsFlat[currentQuestionIndex];
+  speak(q.text + " Options: " + q.options.map((o,i)=>`Option ${i+1}. ${o}`).join(". "));
+};
+
+function updateScoreUI(refreshEnc){
+  scoreEl.textContent=score;
+  streakEl.textContent=streak;
+  starsEl.textContent=stars;
+  finalScoreEl.textContent=score;
+  bestStreakEl.textContent=bestStreak;
+  correctCountEl.textContent=prog.totalCorrect;
+  totalCountEl.textContent=prog.totalAnswered;
+  unlockedCountEl.textContent=prog.unlocked;
+  if(refreshEnc) encourageEl.innerHTML=buildEncouragement();
+  updateParentMode();
+}
+
+function buildEncouragement(){
+  if(prog.totalAnswered===0) return "Start the quiz. After each section, do the open prompts and mini writing.";
+  const acc=prog.totalCorrect/prog.totalAnswered;
+  if(acc>=0.9) return "Excellent comprehension. Next step: retell a chapter aloud in English.";
+  if(acc>=0.75) return "Strong progress. Review vocab cards and replay next week for fluency.";
+  if(acc>=0.6) return "Good foundation. Focus on character motivations in open prompts.";
+  return "Reading grows by repetition. Reread a short part and try again.";
+}
+
+saveOpenBtn.onclick=()=>{
+  openAreaEl.querySelectorAll("textarea").forEach(a=>{
+    localStorage.setItem(a.getAttribute("data-open"), a.value.trim());
+  });
+  saveOpenBtn.textContent="Saved";
+  setTimeout(()=>saveOpenBtn.textContent="Save Answers", 900);
+};
+
+const speechBtn=document.getElementById("speechBtn");
+const speechStatus=document.getElementById("speechStatus");
+let recognition=null, listening=false, lastFocused=null;
+
+openAreaEl.addEventListener("focusin",(e)=>{
+  if(e.target.tagName==="TEXTAREA") lastFocused=e.target;
+});
+
+if("webkitSpeechRecognition" in window || "SpeechRecognition" in window){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang="en-US"; recognition.interimResults=true; recognition.continuous=false;
+
+  recognition.onstart=()=>{ listening=true; speechStatus.textContent="Listening… speak clearly."; };
+  recognition.onerror=(e)=>{ listening=false; speechStatus.textContent="Speech error. Try again."; };
+  recognition.onend=()=>{ listening=false; speechStatus.textContent="Stopped."; };
+
+  recognition.onresult=(event)=>{
+    let transcript="";
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      transcript += event.results[i][0].transcript;
+    }
+    if(lastFocused){
+      lastFocused.value = lastFocused.value.replace(/\s*$/, " ")+transcript;
+    }
+  };
+} else {
+  speechBtn.disabled=true;
+  speechStatus.textContent="Speech-to-text not supported on this browser.";
+}
+
+speechBtn.onclick=()=>{
+  if(!recognition) return;
+  if(listening){ recognition.stop(); return; }
+  if(!lastFocused){
+    speechStatus.textContent="Tap an answer box first, then press Speak.";
+    return;
+  }
+  recognition.start();
+};
+
+let currentListenItem=null;
+function setupListeningItem(){
+  const sec=sections[currentSectionIndex];
+  currentListenItem = sec.listening[0];
+  listenItemText.textContent="";
+  listenOptions.innerHTML="";
+}
+
+listenPlayBtn.onclick=()=>{
+  const sec=sections[currentSectionIndex];
+  const item = sec.listening[Math.floor(Math.random()*sec.listening.length)];
+  currentListenItem=item;
+  listenItemText.textContent="(Listening played)";
+  speak(item.text);
+
+  listenOptions.innerHTML="";
+  item.options.forEach((o,idx)=>{
+    const btn=document.createElement("button");
+    btn.className="secondary tiny";
+    btn.textContent=o;
+    btn.onclick=()=>{
+      if(idx===item.answer){
+        btn.style.borderColor="rgba(16,185,129,.9)";
+        btn.textContent=o+" ✓";
+        score+=3; stars+=1;
+        prog.score=score; prog.stars=stars;
+        localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+        updateScoreUI(true);
+      }else{
+        btn.style.borderColor="rgba(239,68,68,.9)";
+        btn.textContent=o+" ✗";
+      }
+    };
+    listenOptions.appendChild(btn);
+  });
+};
+
+function updateParentMode(){
+  const pCorrect=document.getElementById("pCorrect");
+  const pAnswered=document.getElementById("pAnswered");
+  const pAcc=document.getElementById("pAcc");
+  const pWeak=document.getElementById("pWeak");
+  pCorrect.textContent=prog.totalCorrect;
+  pAnswered.textContent=prog.totalAnswered;
+  const acc = prog.totalAnswered? Math.round(prog.totalCorrect/prog.totalAnswered*100):0;
+  pAcc.textContent=acc+"%";
+
+  const weak=[];
+  prog.sectionScores.forEach((s,i)=>{
+    const a=s.answered? s.correct/s.answered:1;
+    if(a<0.6 && s.answered>0) weak.push(sections[i].title);
+  });
+  pWeak.textContent = weak.length? weak.join("; "):"—";
+}
+
+resetProgressBtn.onclick=()=>{
+  localStorage.removeItem(PROG_KEY);
+  sections.forEach((sec,i)=>{
+    sec.open.forEach((_,j)=>localStorage.removeItem(`${sec.id}-open-${j}`));
+    localStorage.removeItem(`${sec.id}-writing`);
+  });
+  location.reload();
+};
+
+restartSectionBtn.onclick=()=>{
+  prog.sectionScores[currentSectionIndex]={correct:0, answered:0};
+  prog.totalCorrect=0; prog.totalAnswered=0;
+  localStorage.setItem(PROG_KEY, JSON.stringify(prog));
+  currentQuestionIndex=firstQuestionIndexForSection(currentSectionIndex);
+  renderQuestion();
+};
+
+restartAllBtn.onclick=()=>{
+  localStorage.removeItem(PROG_KEY);
+  location.reload();
+};
+
+renderTabs();
+renderQuestion();
+encourageEl.innerHTML=buildEncouragement();
+totalCountEl.textContent = totalQuestions;
+updateScoreUI(true);
+</script>
+</body>
+</html>
